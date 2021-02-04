@@ -4,6 +4,7 @@ const { handleResponse, successResponse, errorResponseServerError } = require('.
 const { sequelize } = require('../models')
 const { getRelayerFunds, fundRelayerIfEmpty } = require('../relay/txRelay')
 const { getEthRelayerFunds } = require('../relay/ethTxRelay')
+const { audiusLibsInstance } = require('../audiusLibsInstance')
 const Web3 = require('web3')
 
 const axios = require('axios')
@@ -36,7 +37,6 @@ module.exports = function (app) {
   */
   app.get('/health_check/relay', handleResponse(async (req, res) => {
     const start = Date.now()
-    const audiusLibsInstance = req.app.get('audiusLibs')
     const redis = req.app.get('redis')
     const web3 = audiusLibsInstance.web3Manager.getWeb3()
 
@@ -166,7 +166,6 @@ module.exports = function (app) {
     await sequelize.query('SELECT 1', { type: sequelize.QueryTypes.SELECT })
 
     // get connected discprov via libs
-    const audiusLibsInstance = req.app.get('audiusLibs')
     return successResponse({ 'healthy': true, 'git': process.env.GIT_SHA, selectedDiscoveryProvider: audiusLibsInstance.discoveryProvider.discoveryProviderEndpoint })
   }))
 

@@ -2,6 +2,7 @@ const request = require('request')
 const config = require('../config.js')
 const models = require('../models')
 const txRelay = require('../relay/txRelay')
+const { audiusLibsInstance } = require('../audiusLibsInstance')
 
 const { handleResponse, successResponse, errorResponseBadRequest } = require('../apiHelpers')
 
@@ -99,7 +100,7 @@ module.exports = function (app) {
    */
   app.post('/instagram/associate', handleResponse(async (req, res, next) => {
     let { uuid, userId, handle } = req.body
-    const audiusLibsInstance = req.app.get('audiusLibs')
+
     try {
       let instagramObj = await models.InstagramUser.findOne({ where: { uuid } })
 

@@ -1,5 +1,6 @@
 const { handleResponse, sendResponse, successResponse, errorResponseBadRequest, errorResponseServerError } = require('../apiHelpers')
 const ethTxRelay = require('../relay/ethTxRelay')
+const { audiusLibsInstance } = require('../audiusLibsInstance')
 const crypto = require('crypto')
 
 module.exports = function (app) {
@@ -50,7 +51,6 @@ module.exports = function (app) {
    * Queries and returns all registered content nodes from chain
    */
   app.get('/registered_creator_nodes', handleResponse(async (req, res, next) => {
-    const audiusLibsInstance = req.app.get('audiusLibs')
     const creatorNodes = await audiusLibsInstance.ethContracts.ServiceProviderFactoryClient.getServiceProviderList('content-node')
     return successResponse(creatorNodes)
   }))

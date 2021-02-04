@@ -26,22 +26,22 @@ const favoriteMilestoneList = baseMilestoneList
 // Track listen milestone list
 const trackListenMilestoneList = baseMilestoneList
 
-async function indexMilestones (milestones, owners, metadata, listenCounts, audiusLibs, tx) {
+async function indexMilestones (milestones, owners, metadata, listenCounts, tx) {
   // Index follower milestones into notifications table
   let timestamp = new Date()
   let blocknumber = metadata.max_block_number
 
   // Index follower milestones
-  await updateFollowerMilestones(milestones.follower_counts, blocknumber, timestamp, audiusLibs, tx)
+  await updateFollowerMilestones(milestones.follower_counts, blocknumber, timestamp, tx)
 
   // Index repost milestones
-  await updateRepostMilestones(milestones.repost_counts, owners, blocknumber, timestamp, audiusLibs, tx)
+  await updateRepostMilestones(milestones.repost_counts, owners, blocknumber, timestamp, tx)
 
   // Index favorite milestones
-  await updateFavoriteMilestones(milestones.favorite_counts, owners, blocknumber, timestamp, audiusLibs, tx)
+  await updateFavoriteMilestones(milestones.favorite_counts, owners, blocknumber, timestamp, tx)
 
   // Index listens
-  await updateTrackListenMilestones(listenCounts, blocknumber, timestamp, audiusLibs, tx)
+  await updateTrackListenMilestones(listenCounts, blocknumber, timestamp, tx)
 }
 
 /**
@@ -49,7 +49,7 @@ async function indexMilestones (milestones, owners, metadata, listenCounts, audi
  * Follower Milestones
  *
  */
-async function updateFollowerMilestones (followerCounts, blocknumber, timestamp, audiusLibs, tx) {
+async function updateFollowerMilestones (followerCounts, blocknumber, timestamp, tx) {
   let followersAddedDictionary = followerCounts
   let usersWithNewFollowers = Object.keys(followersAddedDictionary)
   const followerMilestoneNotificationType = notificationTypes.MilestoneFollow
@@ -73,7 +73,6 @@ async function updateFollowerMilestones (followerCounts, blocknumber, timestamp,
             milestoneValue,
             blocknumber,
             timestamp,
-            audiusLibs,
             tx)
           break
         }
@@ -87,7 +86,7 @@ async function updateFollowerMilestones (followerCounts, blocknumber, timestamp,
  * Repost Milestones
  *
  */
-async function updateRepostMilestones (repostCounts, owners, blocknumber, timestamp, audiusLibs, tx) {
+async function updateRepostMilestones (repostCounts, owners, blocknumber, timestamp, tx) {
   let tracksReposted = Object.keys(repostCounts.tracks)
   let albumsReposted = Object.keys(repostCounts.albums)
   let playlistsReposted = Object.keys(repostCounts.playlists)
@@ -107,7 +106,6 @@ async function updateRepostMilestones (repostCounts, owners, blocknumber, timest
           milestoneValue,
           blocknumber,
           timestamp,
-          audiusLibs,
           tx
         )
         break
@@ -129,7 +127,6 @@ async function updateRepostMilestones (repostCounts, owners, blocknumber, timest
           milestoneValue,
           blocknumber,
           timestamp,
-          audiusLibs,
           tx
         )
         break
@@ -151,7 +148,6 @@ async function updateRepostMilestones (repostCounts, owners, blocknumber, timest
           milestoneValue,
           blocknumber,
           timestamp,
-          audiusLibs,
           tx
         )
         break
@@ -165,7 +161,7 @@ async function updateRepostMilestones (repostCounts, owners, blocknumber, timest
  * Favorites Milestones
  *
  */
-async function updateFavoriteMilestones (favoriteCounts, owners, blocknumber, timestamp, audiusLibs, tx) {
+async function updateFavoriteMilestones (favoriteCounts, owners, blocknumber, timestamp, tx) {
   let tracksFavorited = Object.keys(favoriteCounts.tracks)
   let albumsFavorited = Object.keys(favoriteCounts.albums)
   let playlistsFavorited = Object.keys(favoriteCounts.playlists)
@@ -185,7 +181,6 @@ async function updateFavoriteMilestones (favoriteCounts, owners, blocknumber, ti
           milestoneValue,
           blocknumber,
           timestamp,
-          audiusLibs,
           tx
         )
         break
@@ -207,7 +202,6 @@ async function updateFavoriteMilestones (favoriteCounts, owners, blocknumber, ti
           milestoneValue,
           blocknumber,
           timestamp,
-          audiusLibs,
           tx
         )
         break
@@ -229,7 +223,6 @@ async function updateFavoriteMilestones (favoriteCounts, owners, blocknumber, ti
           milestoneValue,
           blocknumber,
           timestamp,
-          audiusLibs,
           tx
         )
         break
@@ -243,7 +236,7 @@ async function updateFavoriteMilestones (favoriteCounts, owners, blocknumber, ti
  * Listens Milestones
  *
  */
-async function updateTrackListenMilestones (listenCounts, blocknumber, timestamp, audiusLibs, tx) {
+async function updateTrackListenMilestones (listenCounts, blocknumber, timestamp, tx) {
   const listensMilestoneNotificationType = notificationTypes.MilestoneListen
 
   for (var entry of listenCounts) {
@@ -261,7 +254,6 @@ async function updateTrackListenMilestones (listenCounts, blocknumber, timestamp
           milestoneValue,
           blocknumber,
           timestamp,
-          audiusLibs,
           tx
         )
         break
@@ -270,7 +262,7 @@ async function updateTrackListenMilestones (listenCounts, blocknumber, timestamp
   }
 }
 
-async function _processMilestone (milestoneType, userId, entityId, entityType, milestoneValue, blocknumber, timestamp, audiusLibs, tx) {
+async function _processMilestone (milestoneType, userId, entityId, entityType, milestoneValue, blocknumber, timestamp, tx) {
   // Skip notification based on user configuration
   const { notifyMobile, notifyBrowserPush } = await shouldNotifyUser(userId, 'milestonesAndAchievements')
 
@@ -374,7 +366,7 @@ async function _processMilestone (milestoneType, userId, entityId, entityType, m
       }]
     }
 
-    const metadata = await fetchNotificationMetadata(audiusLibs, [milestoneValue], [notifStub])
+    const metadata = await fetchNotificationMetadata([milestoneValue], [notifStub])
     const mapNotification = notificationResponseMap[milestoneType]
     try {
       let msgGenNotif = {

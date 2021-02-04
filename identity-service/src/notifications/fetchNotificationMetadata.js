@@ -5,6 +5,7 @@ const NotificationType = require('../routes/notifications').NotificationType
 const Entity = require('../routes/notifications').Entity
 const mergeAudiusAnnoucements = require('../routes/notifications').mergeAudiusAnnoucements
 const { formatNotificationProps } = require('./formatNotificationMetadata')
+const { audiusLibsInstance } = require('../audiusLibsInstance')
 
 const config = require('../config.js')
 const { logger } = require('../logging')
@@ -19,7 +20,6 @@ const USER_FETCH_LIMIT = 10
 
 /* Merges the notifications with the user announcements in time sorted order (Most recent first).
  *
- * @param {AudiusLibs} audius                   Audius Libs instance
  * @param {number} userId                       The blockchain user id of the recipient of the user
  * @param {Array<Announcement>} announcements   Announcements set on the app
  * @param {moment Time} fromTime                The moment time object from which to get notifications
@@ -29,7 +29,7 @@ const USER_FETCH_LIMIT = 10
  */
 
 const getLastWeek = () => moment().subtract(7, 'days')
-async function getEmailNotifications (audius, userId, announcements = [], fromTime = getLastWeek(), limit = 5) {
+async function getEmailNotifications (userId, announcements = [], fromTime = getLastWeek(), limit = 5) {
   try {
     const user = await models.User.findOne({
       where: { blockchainUserId: userId },
@@ -100,7 +100,7 @@ async function getEmailNotifications (audius, userId, announcements = [], fromTi
 
     const finalUserNotifications = userNotifications.slice(0, limit)
     // Explicitly fetch image thumbnails
-    const metadata = await fetchNotificationMetadata(audius, [userId], finalUserNotifications, true)
+    const metadata = await fetchNotificationMetadata([userId], finalUserNotifications, true)
     const notificationsEmailProps = formatNotificationProps(finalUserNotifications, metadata)
     return [notificationsEmailProps, notificationCount + unreadAnnouncementCount]
   } catch (err) {
@@ -108,7 +108,7 @@ async function getEmailNotifications (audius, userId, announcements = [], fromTi
   }
 }
 
-async function fetchNotificationMetadata (audius, userIds = [], notifications, fetchThumbnails = false) {
+async function fetchNotificationMetadata (userIds = [], notifications, fetchThumbnails = false) {
   let userIdsToFetch = [...userIds]
   let trackIdsToFetch = []
   let collectionIdsToFetch = []
@@ -194,7 +194,7 @@ async function fetchNotificationMetadata (audius, userIds = [], notifications, f
 
   const uniqueTrackIds = [...new Set(trackIdsToFetch)]
   logger.debug('fetchNotificationMetadata.js#uniqueTrackIds', uniqueTrackIds)
-  let tracks = await audius.Track.getTracks(
+  let tracks = await audiusLibsInstance.Track.getTracks(
     /** limit */ uniqueTrackIds.length,
     /** offset */ 0,
     /** idsArray */ uniqueTrackIds
@@ -216,7 +216,7 @@ async function fetchNotificationMetadata (audius, userIds = [], notifications, f
     }, [])
 
     const uniqueParentTrackIds = [...new Set(trackParentIds)]
-    let parentTracks = await audius.Track.getTracks(
+    let parentTracks = await audiusLibsInstance.Track.getTracks(
       /** limit */ uniqueParentTrackIds.length,
       /** offset */ 0,
       /** idsArray */ uniqueParentTrackIds
@@ -228,7 +228,7 @@ async function fetchNotificationMetadata (audius, userIds = [], notifications, f
 
   const uniqueCollectionIds = [...new Set(collectionIdsToFetch)]
   logger.debug('fetchNotificationMetadata.js#uniqueCollectionIds', uniqueCollectionIds)
-  const collections = await audius.Playlist.getPlaylists(
+  const collections = await audiusLibsInstance.Playlist.getPlaylists(
     /** limit */ uniqueCollectionIds.length,
     /** offset */ 0,
     /** idsArray */ uniqueCollectionIds
@@ -241,7 +241,7 @@ async function fetchNotificationMetadata (audius, userIds = [], notifications, f
   const uniqueUserIds = [...new Set(userIdsToFetch)]
   logger.debug('fetchNotificationMetadata.js#uniqueUserIds', uniqueUserIds)
 
-  let users = await audius.User.getUsers(
+  let users = await audiusLibsInstance.User.getUsers(
     /** limit */ uniqueUserIds.length,
     /** offset */ 0,
     /** idsArray */ uniqueUserIds

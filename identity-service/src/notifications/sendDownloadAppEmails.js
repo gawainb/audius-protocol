@@ -12,7 +12,7 @@ const getEmailTemplate = (path) => handlebars.compile(
 const downloadAppTemplatePath = path.resolve(__dirname, './emails/downloadMobileApp.html')
 const downloadAppTemplate = getEmailTemplate(downloadAppTemplatePath)
 
-async function processDownloadAppEmail (expressApp, audiusLibs) {
+async function processDownloadAppEmail (expressApp) {
   try {
     logger.info(`${new Date()} - processDownloadAppEmail`)
 

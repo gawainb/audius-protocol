@@ -18,7 +18,7 @@ const {
 // Mailgun object
 let mg
 
-async function processEmailNotifications (expressApp, audiusLibs) {
+async function processEmailNotifications (expressApp) {
   try {
     logger.info(`${new Date()} - processEmailNotifications`)
 
@@ -211,8 +211,7 @@ async function processEmailNotifications (expressApp, audiusLibs) {
           userEmail,
           appAnnouncements,
           frequency,
-          lastSentTimestamp, // use lastSentTimestamp to get all new notifs
-          audiusLibs
+          lastSentTimestamp // use lastSentTimestamp to get all new notifs
         )
         if (!sent) { continue }
         logger.info(`Live email to ${userId}, last email from ${lastSentTimestamp}`)
@@ -236,8 +235,7 @@ async function processEmailNotifications (expressApp, audiusLibs) {
             userEmail,
             appAnnouncements,
             frequency,
-            frequency === 'daily' ? dayAgo : weekAgo,
-            audiusLibs
+            frequency === 'daily' ? dayAgo : weekAgo
           )
           if (!sent) { continue }
           logger.info(`First email for ${userId}, ${frequency}, ${currentUtcTime}`)
@@ -258,8 +256,7 @@ async function processEmailNotifications (expressApp, audiusLibs) {
                 userEmail,
                 appAnnouncements,
                 frequency,
-                dayAgo,
-                audiusLibs
+                dayAgo
               )
               if (!sent) { continue }
 
@@ -279,8 +276,7 @@ async function processEmailNotifications (expressApp, audiusLibs) {
                 userEmail,
                 appAnnouncements,
                 frequency,
-                weekAgo,
-                audiusLibs
+                weekAgo
               )
               if (!sent) { continue }
               await models.NotificationEmail.create({
@@ -306,12 +302,10 @@ async function renderAndSendEmail (
   announcements,
   frequency,
   startTime,
-  audiusLibs
 ) {
   try {
     logger.info(`renderAndSendEmail ${userId}, ${userEmail}, ${frequency}, from ${startTime}`)
     const [notificationProps, notificationCount] = await getEmailNotifications(
-      audiusLibs,
       userId,
       announcements,
       startTime,

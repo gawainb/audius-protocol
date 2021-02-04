@@ -17,7 +17,7 @@ const {
 
 let subscriberPushNotifications = []
 
-async function indexNotifications (notifications, tx, audiusLibs) {
+async function indexNotifications (notifications, tx) {
   for (let notif of notifications) {
     // blocknumber + timestamp parsed for all notification types
     let blocknumber = notif.blocknumber
@@ -27,7 +27,7 @@ async function indexNotifications (notifications, tx, audiusLibs) {
     if (notif.type === notificationTypes.Follow) {
       let notificationTarget = notif.metadata.followee_user_id
       const shouldNotify = await shouldNotifyUser(notificationTarget, 'followers', tx)
-      await _processFollowNotifications(audiusLibs, notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify)
+      await _processFollowNotifications(notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify)
     }
 
     // Handle the 'repost' notification type
@@ -35,31 +35,31 @@ async function indexNotifications (notifications, tx, audiusLibs) {
     if (notif.type === notificationTypes.Repost.base) {
       let notificationTarget = notif.metadata.entity_owner_id
       const shouldNotify = await shouldNotifyUser(notificationTarget, 'reposts', tx)
-      await _processBaseRepostNotifications(audiusLibs, notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify)
+      await _processBaseRepostNotifications(notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify)
     }
 
     // Handle the 'favorite' notification type, track/album/playlist
     if (notif.type === notificationTypes.Favorite.base) {
       let notificationTarget = notif.metadata.entity_owner_id
       const shouldNotify = await shouldNotifyUser(notificationTarget, 'favorites', tx)
-      await _processFavoriteNotifications(audiusLibs, notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify)
+      await _processFavoriteNotifications(notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify)
     }
 
     // Handle the 'remix create' notification type
     if (notif.type === notificationTypes.RemixCreate) {
       let notificationTarget = notif.metadata.remix_parent_track_user_id
       const shouldNotify = await shouldNotifyUser(notificationTarget, 'remixes', tx)
-      await _processRemixCreateNotifications(audiusLibs, notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify)
+      await _processRemixCreateNotifications(notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify)
     }
 
     // Handle the 'favorite' notification type, track/album/playlist
     if (notif.type === notificationTypes.RemixCosign) {
-      await _processCosignNotifications(audiusLibs, notif, blocknumber, timestamp, tx)
+      await _processCosignNotifications(notif, blocknumber, timestamp, tx)
     }
 
     // Handle the 'create' notification type, track/album/playlist
     if (notif.type === notificationTypes.Create.base) {
-      await _processCreateNotifications(audiusLibs, notif, blocknumber, timestamp, tx)
+      await _processCreateNotifications(notif, blocknumber, timestamp, tx)
     }
   }
   await _processSubscriberPushNotifications(tx)
@@ -87,7 +87,7 @@ async function _processSubscriberPushNotifications (tx) {
   subscriberPushNotifications = subscriberPushNotifications.filter(x => x.pending)
 }
 
-async function _processFollowNotifications (audiusLibs, notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify) {
+async function _processFollowNotifications (notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify) {
   const { notifyMobile, notifyBrowserPush } = shouldNotify
   let notificationInitiator = notif.metadata.follower_user_id
 
@@ -158,7 +158,7 @@ async function _processFollowNotifications (audiusLibs, notif, blocknumber, time
       }
 
       // fetch metadata
-      const metadata = await fetchNotificationMetadata(audiusLibs, notifWithAddProps.initiator, [notifWithAddProps])
+      const metadata = await fetchNotificationMetadata(notifWithAddProps.initiator, [notifWithAddProps])
 
       // map properties necessary to render push notification message
       // note that user.thumbnail will be undefined with default fetchThumbnail = false above
@@ -182,7 +182,7 @@ async function _processFollowNotifications (audiusLibs, notif, blocknumber, time
   }
 }
 
-async function _processBaseRepostNotifications (audiusLibs, notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify) {
+async function _processBaseRepostNotifications (notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify) {
   let repostType = null
   let notificationEntityId = notif.metadata.entity_id
   let notificationInitiator = notif.initiator
@@ -273,7 +273,7 @@ async function _processBaseRepostNotifications (audiusLibs, notif, blocknumber, 
       }
 
       // fetch metadata
-      const metadata = await fetchNotificationMetadata(audiusLibs, notifWithAddProps.initiator, [notifWithAddProps])
+      const metadata = await fetchNotificationMetadata(notifWithAddProps.initiator, [notifWithAddProps])
 
       // map properties necessary to render push notification message
       // note that user.thumbnail will be undefined with default fetchThumbnail = false above
@@ -297,7 +297,7 @@ async function _processBaseRepostNotifications (audiusLibs, notif, blocknumber, 
   }
 }
 
-async function _processFavoriteNotifications (audiusLibs, notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify) {
+async function _processFavoriteNotifications (notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify) {
   let favoriteType = null
   let notificationEntityId = notif.metadata.entity_id
   let notificationInitiator = notif.initiator
@@ -387,7 +387,7 @@ async function _processFavoriteNotifications (audiusLibs, notif, blocknumber, ti
       }
 
       // fetch metadata
-      const metadata = await fetchNotificationMetadata(audiusLibs, notifWithAddProps.initiator, [notifWithAddProps])
+      const metadata = await fetchNotificationMetadata(notifWithAddProps.initiator, [notifWithAddProps])
 
       // map properties necessary to render push notification message
       // note that user.thumbnail will be undefined with default fetchThumbnail = false above
@@ -411,7 +411,7 @@ async function _processFavoriteNotifications (audiusLibs, notif, blocknumber, ti
   }
 }
 
-async function _processCreateNotifications (audiusLibs, notif, blocknumber, timestamp, tx) {
+async function _processCreateNotifications (notif, blocknumber, timestamp, tx) {
   let createType = null
   let actionEntityType = null
   switch (notif.metadata.entity_type) {
@@ -532,7 +532,7 @@ async function _processCreateNotifications (audiusLibs, notif, blocknumber, time
       }
 
       // fetch metadata
-      const metadata = await fetchNotificationMetadata(audiusLibs, notifWithAddProps.initiator, [notifWithAddProps])
+      const metadata = await fetchNotificationMetadata(notifWithAddProps.initiator, [notifWithAddProps])
 
       // map properties necessary to render push notification message
       // note that user.thumbnail will be undefined with default fetchThumbnail = false above
@@ -600,7 +600,7 @@ async function _processCreateNotifications (audiusLibs, notif, blocknumber, time
   }
 }
 
-async function _processRemixCreateNotifications (audiusLibs, notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify) {
+async function _processRemixCreateNotifications (notif, blocknumber, timestamp, tx, notificationTarget, shouldNotify) {
   const {
     entity_id: childTrackId,
     entity_owner_id: childTrackUserId,
@@ -660,7 +660,7 @@ async function _processRemixCreateNotifications (audiusLibs, notif, blocknumber,
     }
 
     // fetch metadata
-    const metadata = await fetchNotificationMetadata(audiusLibs, childTrackUserId, [notifWithAddProps])
+    const metadata = await fetchNotificationMetadata(childTrackUserId, [notifWithAddProps])
 
     // map properties necessary to render push notification message
     // note that user.thumbnail will be undefined with default fetchThumbnail = false above
@@ -691,7 +691,7 @@ async function _processRemixCreateNotifications (audiusLibs, notif, blocknumber,
   }
 }
 
-async function _processCosignNotifications (audiusLibs, notif, blocknumber, timestamp, tx) {
+async function _processCosignNotifications (notif, blocknumber, timestamp, tx) {
   const {
     entity_id: childTrackId,
     entity_owner_id: childTrackUserId
@@ -757,7 +757,7 @@ async function _processCosignNotifications (audiusLibs, notif, blocknumber, time
     }
 
     // fetch metadata
-    const metadata = await fetchNotificationMetadata(audiusLibs, notifWithAddProps.initiator, [notifWithAddProps])
+    const metadata = await fetchNotificationMetadata(notifWithAddProps.initiator, [notifWithAddProps])
 
     // map properties necessary to render push notification message
     // note that user.thumbnail will be undefined with default fetchThumbnail = false above

@@ -74,12 +74,11 @@ async function getTrendingTracks () {
  *   - The trending track should be new or move up in rank ie. from rank 4 => rank 1
  * Insert the notification and notificationAction into the DB
  * Check the user's notification settings, and if enabled, send a push notification
- * @param {AudiusLibs} audiusLibs Audius Libs instance
  * @param {number} blocknumber Blocknumber of the discovery provider
  * @param {Array<{ trackId: number, rank: number, userId: number }>} trendingTracks Array of the trending tracks
  * @param {*} tx DB transaction
  */
-async function processTrendingTracks (audiusLibs, blocknumber, trendingTracks, tx) {
+async function processTrendingTracks (blocknumber, trendingTracks, tx) {
   const now = moment()
   for (let idx = 0; idx < trendingTracks.length; idx += 1) {
     const { rank, trackId, userId } = trendingTracks[idx]
@@ -146,7 +145,7 @@ async function processTrendingTracks (audiusLibs, blocknumber, trendingTracks, t
         }]
       }
 
-      const metadata = await fetchNotificationMetadata(audiusLibs, [], [notifStub])
+      const metadata = await fetchNotificationMetadata([], [notifStub])
       const mapNotification = notificationResponseMap[notificationTypes.TrendingTrack]
       try {
         let msgGenNotif = {
@@ -169,10 +168,10 @@ async function processTrendingTracks (audiusLibs, blocknumber, trendingTracks, t
   }
 }
 
-async function indexTrendingTracks (audiusLibs, tx) {
+async function indexTrendingTracks (tx) {
   try {
     const { trendingTracks, blocknumber } = await getTrendingTracks()
-    await processTrendingTracks(audiusLibs, blocknumber, trendingTracks, tx)
+    await processTrendingTracks(blocknumber, trendingTracks, tx)
   } catch (err) {
     logger.error(`Unable to process trending track notifications: ${err.message}`)
   }

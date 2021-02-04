@@ -56,11 +56,10 @@ const getUserNotificationSettings = async (userIdsToNotify, tx) => {
 /**
  * Fetches all users to send a push notification, gets their users' push notifications settings,
  * populates notifications with extra data from DP, and adds the notification to the queue
- * @param {Object} audiusLibs Instance of audius libs
  * @param {Array<Object>} notifications Array of notifications from DP
  * @param {*} tx The DB transaction to add to every DB query
  */
-async function sendNotifications (audiusLibs, notifications, tx) {
+async function sendNotifications (notifications, tx) {
   // Parse the notification to grab the user ids that we want to notify
   const userIdsToNotify = getUserIdsToNotify(notifications)
 
@@ -71,7 +70,7 @@ async function sendNotifications (audiusLibs, notifications, tx) {
   const { notifications: formattedNotifications, users } = await formatNotification(notifications, userNotificationSettings, tx)
 
   // Get the metadata for the notifications - users/tracks/playlists from DP that are in the notification
-  const metadata = await fetchNotificationMetadata(audiusLibs, users, formattedNotifications)
+  const metadata = await fetchNotificationMetadata(users, formattedNotifications)
 
   // using the metadata, populate the notifications, and push them to the publish queue
   await publishNotifications(formattedNotifications, metadata, userNotificationSettings, tx)

@@ -46,11 +46,10 @@ class NotificationProcessor {
    * 2. Update all blockchainId's in the users table where blockchainId is null
    * 3. Process notif queue and recursively add notif job on queue after 3 seconds
    *    Process email queue and recursively add email job on queue after 3 seconds
-   * @param {Object} audiusLibs libs instance
    * @param {Object} expressApp express app context
    * @param {Object} redis redis connection
    */
-  async init (audiusLibs, expressApp, redis) {
+  async init (expressApp, redis) {
     // Clear any pending notif jobs
     await this.notifQueue.empty()
     await this.emailQueue.empty()
@@ -80,7 +79,7 @@ class NotificationProcessor {
           logger.debug('notification queue processing error - tried to process a minBlock < oldMaxBlockNumber', minBlock, oldMaxBlockNumber)
           maxBlockNumber = oldMaxBlockNumber
         } else {
-          maxBlockNumber = await this.indexAll(audiusLibs, minBlock, oldMaxBlockNumber)
+          maxBlockNumber = await this.indexAll(minBlock, oldMaxBlockNumber)
         }
 
         // Update cached max block number
@@ -108,8 +107,8 @@ class NotificationProcessor {
     // Email notification queue
     this.emailQueue.process(async (job, done) => {
       logger.info('processEmailNotifications')
-      await processEmailNotifications(expressApp, audiusLibs)
-      await processDownloadAppEmail(expressApp, audiusLibs)
+      await processEmailNotifications(expressApp)
+      await processDownloadAppEmail(expressApp)
       done()
     })
 
@@ -150,7 +149,7 @@ class NotificationProcessor {
    * 5. Process milestones
    * @param {Integer} minBlock min start block to start querying discprov for new notifications
    */
-  async indexAll (audiusLibs, minBlock, oldMaxBlockNumber) {
+  async indexAll (minBlock, oldMaxBlockNumber) {
     const startDate = Date.now()
     const startTime = process.hrtime()
 
@@ -196,12 +195,12 @@ class NotificationProcessor {
       await processNotifications(notifications, tx)
 
       // Fetch additional metadata from DP, query for the user's notification settings, and send push notifications (mobile/browser)
-      await sendNotifications(audiusLibs, notifications, tx)
+      await sendNotifications(notifications, tx)
 
-      await indexMilestones(milestones, owners, metadata, listenCountWithOwners, audiusLibs, tx)
+      await indexMilestones(milestones, owners, metadata, listenCountWithOwners, tx)
 
       // Fetch trending track milestones
-      await indexTrendingTracks(audiusLibs, tx)
+      await indexTrendingTracks(tx)
 
       // Commit
       await tx.commit()
