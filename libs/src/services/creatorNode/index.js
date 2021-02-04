@@ -98,7 +98,7 @@ class CreatorNode {
     schemas,
     passList = null,
     blockList = null,
-    monitoringCallbacks = null
+    monitoringCallbacks = {}
   ) {
     this.web3Manager = web3Manager
     // This is just 1 endpoint (primary), unlike the creator_node_endpoint field in user metadata
@@ -570,8 +570,8 @@ class CreatorNode {
     axiosRequestObj.baseURL = this.creatorNodeEndpoint
 
     // Axios throws for non-200 responses
+    const start = Date.now()
     try {
-      const start = Date.now()
       const resp = await axios(axiosRequestObj)
       const duration = Date.now() - start
 
@@ -589,6 +589,19 @@ class CreatorNode {
       // Axios `data` field gets the response body
       return resp.data
     } catch (e) {
+      const resp = e.response || {}
+      const duration = Date.now() - start
+
+      if (this.monitoringCallbacks.request) {
+        this.monitoringCallbacks.request({
+          endpoint: axiosRequestObj.baseURL,
+          pathname: axiosRequestObj.url,
+          requestMethod: axiosRequestObj.method,
+          status: resp.status,
+          responseTimeMillis: duration
+        })
+      }
+
       _handleErrorHelper(e, axiosRequestObj.url)
     }
   }
